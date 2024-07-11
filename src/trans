@@ -15,11 +15,11 @@ loader() {
 		exit 2
 	fi
 	liter=0
-	while [[ liter < $1 ]] do
+	while [[ liter -lt $1 ]] do
 		echo -n "#"
 		((liter=liter+1))
 	done
-	while [[ liter < 10 ]] do
+	while [[ liter -lt 10 ]] do
 		echo -n " "
 		((liter=liter+1))
 	done
@@ -47,7 +47,7 @@ do
 			loading="          "
 			space="  "
 		else
-			loading=$(loader ${perc:0:1})
+			loading=$(loader ${perc:1:1})
 			space=" "
 		fi
 		echo "$perc% $space[$loading] $name"
