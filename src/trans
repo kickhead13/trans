@@ -1,5 +1,10 @@
 #!/bin/bash
 
+clear
+
+mkdir ~/.trans 2> /dev/null
+touch ~/.trans/cat 2> /dev/null
+
 count() {
 	i=0
 	while read line 
@@ -36,24 +41,33 @@ then
 	exit 1
 fi
 
-transmission-remote -l | tr " " "\t" | cut -f6 | tail -n$counter | head -n$k | while read iter
-do
-	info=$(transmission-remote -t $iter -i | perl -ne "print if /Name/ xor /Percent/" | tr "\n" "\`" )
-	perc=$(cut -d "." -f1 <<< $(cut -d "%" -f1 <<< $(cut -d ":" -f2  <<< $(echo $info | tr "\`" "\n" | grep "Percent Done:"))))
-	name=$(echo $info | tr "\`" "\n" | grep "Name:")
-	if [[ $perc -lt 100 ]]
-	then
-		if [[ $perc -lt 10 ]] then
-			loading="          "
-			space="  "
-		else
-			loading=$(loader ${perc:1:1})
-			space=" "
+for (( ; ; ))
+do	
+	tput cup 0 0
+	echo "" > ~/.trans/cat
+	transmission-remote -l | tr " " "\t" | cut -f6 | tail -n$counter | head -n$k | while read iter
+	do
+		info=$(transmission-remote -t $iter -i | tr "\n" "\`" )
+		perc=$(cut -d "." -f1 <<< $(cut -d "%" -f1 <<< $(cut -d ":" -f2  <<< $(echo $info | tr "\`" "\n" | grep "Percent Done:"))))
+		speed=$(cut -d ":" -f2 <<< $(echo $info | tr "\`" "\n" | grep "Download Speed"))
+		eta=$(cut -d "(" -f1 <<< $(cut -d ":" -f2 <<< $(echo $info | tr "\`" "\n" | grep "ETA")))
+		name=$(echo $info | tr "\`" "\n" | grep "Name:")
+		if [[ $perc -lt 100 ]]
+		then
+			if [[ $perc -lt 10 ]] then
+				loading="          "
+				space="  "
+			else
+				loading=$(loader ${perc:1:1})
+				space=" "
 		fi
-		echo "$perc% $space[$loading] $name"
-	else
-		echo "$perc% [   done   ] $name"
-	fi
-	((iter=iter+1))
+			echo "$perc% $space[$loading] ($eta$speed) $name" >> ~/.trans/cat
+		else
+			echo "$perc% [   done   ] $name" >> ~/.trans/cat
+		fi
+		((iter=iter+1))
+	done
+	cat ~/.trans/cat | tail -n +2
+	sleep 1s
 done
 exit 0
